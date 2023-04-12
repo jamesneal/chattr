@@ -2,6 +2,7 @@
 <script>
 	// Import marked
 	import { marked } from 'marked';
+	import { onMount } from 'svelte';
 
 	// Define the JSDoc type for the messages variable.  It's an array of objects.
 	/**
@@ -35,6 +36,10 @@
 		scrollToBottom();
 	}
 
+	onMount(() => {
+		scrollToBottom();
+	});
+
 	function postMessage() {
 		messages = [...messages, message];
 		console.log(messages);
@@ -64,7 +69,7 @@
 </script>
 
 <!-- A "chat" is a list of messages from the server, and messages from the user. -->
-<div class="border-white border-4 flex flex-col">
+<div class="flex flex-col content-center">
 	{#each messages as message}
 		<div class="message">
 			<div class="role">{message.role == 'user' ? 'You' : 'GPT'}</div>
@@ -80,6 +85,7 @@
 			bind:this={textentrybox}
 		/>
 		<button class="button" on:click={postMessage}>Send</button>
+		<button class="button bg-red-300 ml-4" on:click={() => (messages = [])}>Clear</button>
 	</div>
 </div>
 
@@ -105,6 +111,7 @@
 		color: theme(colors.gray.500);
 	}
 	.button {
+		@apply pulse px-4 py-2 text-white bg-blue-500 rounded-md hover:bg-blue-600 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-400;
 		@apply bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded;
 	}
 	.textentry {
@@ -112,11 +119,32 @@
 	}
 	.textentry-row {
 		/* Div should be Full width */
-		@apply flex flex-row;
+		@apply flex flex-row drop-shadow-2xl;
 	}
 
 	/* Add some text to the top of the readonly textarea */
 	.readonly {
 		background-color: theme(colors.gray.500);
+	}
+
+	@keyframes pulse {
+		0% {
+			transform: scale(1);
+			opacity: 1;
+		}
+
+		50% {
+			transform: scale(1.05);
+			opacity: 0.7;
+		}
+
+		100% {
+			transform: scale(1);
+			opacity: 1;
+		}
+	}
+
+	.pulse:hover {
+		animation: pulse 2s ease-out infinite;
 	}
 </style>

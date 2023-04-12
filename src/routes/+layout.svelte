@@ -7,7 +7,7 @@
 
 <div class="flex justify-center border-red-700 text-black">
 	<!-- Div that takes up 1/2 of the screen -->
-	<div class="w-1/2">
+	<div class="w-full md:w-3/4">
 		<slot />
 	</div>
 </div>
