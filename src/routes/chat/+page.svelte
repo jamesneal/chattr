@@ -15,20 +15,23 @@
 	 */
 	let messagebox;
 
+	let textentrybox;
+
 	/**
 	 * @type {{content: string, role: string}}
 	 */
 	let message = { content: '', role: 'user' };
-
+	let loading = false;
 	function scrollToBottom() {
 		if (messagebox) {
 			console.log({ message: 'Oh yes! Scrolling!', messagebox: messagebox });
 
 			messagebox.scrollIntoView(false);
+			textentrybox.focus();
 		}
 	}
 
-	$: if (messagebox) {
+	$: if (!loading) {
 		scrollToBottom();
 	}
 
@@ -38,6 +41,7 @@
 
 		message = { content: '', role: 'user' };
 		message.content = '';
+		loading = true;
 
 		// Use fetch to send a POST request to the server.
 		fetch('/chat', {
@@ -54,20 +58,27 @@
 				var resp = JSON.parse(data.data);
 				messages = [...messages, { content: resp[3], role: resp[2] }];
 				console.log(messages);
+				loading = false;
 			});
 	}
 </script>
 
 <!-- A "chat" is a list of messages from the server, and messages from the user. -->
-<div class="border-white border-4">
+<div class="border-white border-4 flex flex-col">
 	{#each messages as message}
 		<div class="message">
-			<div class="role">{message.role}</div>
+			<div class="role">{message.role == 'user' ? 'You' : 'GPT'}</div>
 			<div class="content">{@html marked(message.content)}</div>
 		</div>
 	{/each}
-	<div bind:this={messagebox} class="textentry-row w-full">
-		<textarea bind:value={message.content} />
+	<div class:loading bind:this={messagebox} class="textentry-row w-full">
+		<textarea
+			placeholder={loading ? 'Loading....' : ''}
+			readonly={loading}
+			class:readonly={loading}
+			bind:value={message.content}
+			bind:this={textentrybox}
+		/>
 		<button class="button" on:click={postMessage}>Send</button>
 	</div>
 </div>
@@ -102,5 +113,10 @@
 	.textentry-row {
 		/* Div should be Full width */
 		@apply flex flex-row;
+	}
+
+	/* Add some text to the top of the readonly textarea */
+	.readonly {
+		background-color: theme(colors.gray.500);
 	}
 </style>
