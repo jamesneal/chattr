@@ -3,6 +3,8 @@
 	// Import marked
 	import { marked } from 'marked';
 	import { onMount } from 'svelte';
+	// Slide transistion
+	import { slide } from 'svelte/transition';
 
 	// Define the JSDoc type for the messages variable.  It's an array of objects.
 	/**
@@ -40,6 +42,10 @@
 		scrollToBottom();
 	});
 
+	function clearMessages() {
+		messages = [];
+		scrollToBottom();
+	}
 	function postMessage() {
 		messages = [...messages, message];
 		console.log(messages);
@@ -64,6 +70,11 @@
 				messages = [...messages, { content: resp[3], role: resp[2] }];
 				console.log(messages);
 				loading = false;
+			})
+			.catch((error) => {
+				console.error('Error:', error);
+				messages = [...messages, { content: 'Error: ' + error, role: 'error' }];
+				loading = false;
 			});
 	}
 </script>
@@ -71,7 +82,7 @@
 <!-- A "chat" is a list of messages from the server, and messages from the user. -->
 <div class="flex flex-col content-center">
 	{#each messages as message}
-		<div class="message">
+		<div class="message" transition:slide>
 			<div class="role">{message.role == 'user' ? 'You' : 'GPT'}</div>
 			<div class="content">{@html marked(message.content)}</div>
 		</div>
@@ -85,7 +96,7 @@
 			bind:this={textentrybox}
 		/>
 		<button class="button" on:click={postMessage}>Send</button>
-		<button class="button bg-red-300 ml-4" on:click={() => (messages = [])}>Clear</button>
+		<button class="button bg-red-300 ml-4" on:click={clearMessages}>Clear</button>
 	</div>
 </div>
 
