@@ -7,10 +7,12 @@ export const actions = {
   default: async (event) => {
     var data = await event.request.formData()
     var messages = JSON.parse(data.get('messages'))
-    // Return an object with all the keys and values in the FormData object
+    // If there are errors, catch them and return them
     const reply = await openai.createChatCompletion({
       model: 'gpt-3.5-turbo',
       messages: messages,
+    }).catch((err) => {
+      return { error: err }
     })
     return { message: reply.data.choices[0].message }
   }

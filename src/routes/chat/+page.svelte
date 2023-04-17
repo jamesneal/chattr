@@ -1,12 +1,11 @@
 <!-- This does the openai "chat" service. -->
 <script>
 	// Import marked
+	import PersonalityModule from '$lib/PersonalityModule.svelte';
 	import { marked } from 'marked';
 	import { onMount } from 'svelte';
-	// Slide transistion
 	import { slide } from 'svelte/transition';
 
-	// Define the JSDoc type for the messages variable.  It's an array of objects.
 	/**
 	 * @type {Array<{content: string, role: string}>}
 	 */
@@ -18,7 +17,14 @@
 	 */
 	let messagebox;
 
+	/**
+	 * @type {Object}
+	 */
 	let textentrybox;
+
+	let personality = { content: '', role: 'system' };
+
+	let selectedpersonality = 'default';
 
 	/**
 	 * @type {{content: string, role: string}}
@@ -27,8 +33,6 @@
 	let loading = false;
 	function scrollToBottom() {
 		if (messagebox) {
-			console.log({ message: 'Oh yes! Scrolling!', messagebox: messagebox });
-
 			messagebox.scrollIntoView(false);
 			textentrybox.focus();
 		}
@@ -42,18 +46,37 @@
 		scrollToBottom();
 	});
 
+	function handleKeypress(event) {
+		if (event.metaKey && event.keyCode === 13) {
+			// Command+Enter was pressed
+			myFunction();
+		}
+	}
+
+	function myFunction() {
+		console.log('Command+Enter was pressed');
+		// Insert your desired function here
+	}
+
 	function clearMessages() {
 		messages = [];
 		scrollToBottom();
 	}
+
 	function postMessage() {
+		let messages_to_send = [];
+		if (personality.content !== '') {
+			messages_to_send = [personality, ...messages, message];
+		} else {
+			messages_to_send = [...messages, message];
+		}
 		messages = [...messages, message];
-		console.log(messages);
 
 		message = { content: '', role: 'user' };
 		message.content = '';
 		loading = true;
 
+		console.log('sending', messages_to_send);
 		// Use fetch to send a POST request to the server.
 		fetch('/chat', {
 			method: 'POST',
@@ -61,14 +84,18 @@
 				'Content-Type': 'application/x-www-form-urlencoded'
 			},
 			body: new URLSearchParams({
-				messages: JSON.stringify(messages)
+				messages: JSON.stringify(messages_to_send)
 			})
 		})
 			.then((response) => response.json())
 			.then((data) => {
 				var resp = JSON.parse(data.data);
+				if (resp.error) {
+					messages = [...messages, { content: resp.error, role: 'error' }];
+					loading = false;
+					return;
+				}
 				messages = [...messages, { content: resp[3], role: resp[2] }];
-				console.log(messages);
 				loading = false;
 			})
 			.catch((error) => {
@@ -77,26 +104,66 @@
 				loading = false;
 			});
 	}
+
+	function updateContent(event, message) {
+		message.content = event.target.innerText;
+	}
 </script>
 
-<!-- A "chat" is a list of messages from the server, and messages from the user. -->
-<div class="flex flex-col content-center">
-	{#each messages as message}
-		<div class="message" transition:slide>
-			<div class="role">{message.role == 'user' ? 'You' : 'GPT'}</div>
-			<div class="content">{@html marked(message.content)}</div>
+<!-- The page has two columns. The left one is w-1/4 the right is w-3/4 and contains all the messages. -->
+<div class="flex flex-col md:flex-row">
+	<div class="mr-4 min-w-fit max-w-fit">
+		<PersonalityModule bind:message={personality} />
+	</div>
+	<div class="w-full">
+		<div class=" h-screen">
+			<div class="content-center">
+				{#each messages as message}
+					<div class="message" transition:slide>
+						<div class="role">{message.role == 'user' ? 'You' : 'GPT'}</div>
+						<div
+							class="content"
+							contenteditable="true"
+							on:blur={(event) => updateContent(event, message)}
+						>
+							{@html marked(message.content)}
+						</div>
+					</div>
+				{/each}
+			</div>
+			<div class:loading bind:this={messagebox} class="textentry-row w-full">
+				<form class="w-full">
+					<textarea
+						placeholder={loading ? 'Loading....' : ''}
+						readonly={loading}
+						id="textentrybox"
+						class:readonly={loading}
+						on:keypress={handleKeypress}
+						bind:value={message.content}
+						bind:this={textentrybox}
+						class="block p-2.5 w-full text-sm text-gray-900 bg-white rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+					/>
+					<button
+						type="submit"
+						on:click={postMessage}
+						class="button align-middle p-2 text-blue-600 rounded-full cursor-pointer hover:bg-blue-100 dark:text-blue-500 dark:hover:bg-gray-600"
+					>
+						<svg
+							aria-hidden="true"
+							class="w-6 h-6 rotate-90"
+							fill="currentColor"
+							viewBox="0 0 20 20"
+							xmlns="http://www.w3.org/2000/svg"
+							><path
+								d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"
+							/></svg
+						>
+						<span class="sr-only">Send message</span>
+					</button>
+					<button class="button bg-red-300 ml-4" on:click={clearMessages}>Clear</button>
+				</form>
+			</div>
 		</div>
-	{/each}
-	<div class:loading bind:this={messagebox} class="textentry-row w-full">
-		<textarea
-			placeholder={loading ? 'Loading....' : ''}
-			readonly={loading}
-			class:readonly={loading}
-			bind:value={message.content}
-			bind:this={textentrybox}
-		/>
-		<button class="button" on:click={postMessage}>Send</button>
-		<button class="button bg-red-300 ml-4" on:click={clearMessages}>Clear</button>
 	</div>
 </div>
 
