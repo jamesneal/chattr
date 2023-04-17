@@ -45,6 +45,12 @@
 		personality.temperature = temperature;
 		db.personalities.update(personality.id, personality);
 	}
+
+	function deletePersonality() {
+		const personality = $personalities.find((p) => p.id === Number(selected));
+		db.personalities.delete(personality.id);
+		selected = 'default';
+	}
 </script>
 
 <div class="flex flex-col border-2 border-purple-500 rounded">
@@ -83,8 +89,13 @@
 		</div>
 		<!-- Update a personality -->
 		{#if selected !== 'default'}
-			<div>
-				<button on:click={updatePersonality} class="button">Update</button>
+			<div class="text-white text-center flex flex-row">
+				<div class="w-full mr-2">
+					<button on:click={deletePersonality} class="button w-full">Delete</button>
+				</div>
+				<div class="w-full">
+					<button on:click={updatePersonality} class="button w-full">Update</button>
+				</div>
 			</div>
 		{/if}
 	</div>

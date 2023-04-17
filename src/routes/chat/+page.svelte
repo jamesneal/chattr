@@ -63,28 +63,15 @@
 		scrollToBottom();
 	}
 
-	function postMessage() {
-		let messages_to_send = [];
-		if (personality.content !== '') {
-			messages_to_send = [personality, ...messages, message];
-		} else {
-			messages_to_send = [...messages, message];
-		}
-		messages = [...messages, message];
-
-		message = { content: '', role: 'user' };
-		message.content = '';
+	function fetchMessages(outgoing_messages) {
 		loading = true;
-
-		console.log('sending', messages_to_send);
-		// Use fetch to send a POST request to the server.
 		fetch('/chat', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/x-www-form-urlencoded'
 			},
 			body: new URLSearchParams({
-				messages: JSON.stringify(messages_to_send)
+				messages: JSON.stringify(outgoing_messages)
 			})
 		})
 			.then((response) => response.json())
@@ -104,9 +91,42 @@
 				loading = false;
 			});
 	}
+	function postMessage() {
+		let messages_to_send = [];
+		if (personality.content !== '') {
+			messages_to_send = [personality, ...messages, message];
+		} else {
+			messages_to_send = [...messages, message];
+		}
+		messages = [...messages, message];
+
+		message = { content: '', role: 'user' };
+		message.content = '';
+		changed = [];
+
+		console.log('sending', messages_to_send);
+		// Use fetch to send a POST request to the server.
+		fetchMessages(messages_to_send);
+	}
+
+	let changed = [];
 
 	function updateContent(event, message) {
 		message.content = event.target.innerText;
+		changed[messages.indexOf(message)] = true;
+	}
+
+	// Remove all messages after this one from the messages array
+	function reload(index) {
+		console.log('Reloading from message ' + index);
+		messages = messages.slice(0, index + 1);
+		let mymessages = [];
+		if (personality.content !== '') {
+			mymessages = [personality, ...messages];
+		} else {
+			mymessages = [...messages];
+		}
+		fetchMessages(mymessages);
 	}
 </script>
 
@@ -118,8 +138,8 @@
 	<div class="w-full">
 		<div class=" h-screen">
 			<div class="content-center">
-				{#each messages as message}
-					<div class="message" transition:slide>
+				{#each messages as message, i}
+					<div id="message_{i}" class="message" transition:slide>
 						<div class="role">{message.role == 'user' ? 'You' : 'GPT'}</div>
 						<div
 							class="content"
@@ -128,6 +148,11 @@
 						>
 							{@html marked(message.content)}
 						</div>
+						{#if changed[i]}
+							<div class="float-right">
+								<button on:click={() => reload(i)}>Reload</button>
+							</div>
+						{/if}
 					</div>
 				{/each}
 			</div>
