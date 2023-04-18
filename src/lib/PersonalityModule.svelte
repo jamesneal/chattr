@@ -3,12 +3,14 @@
 	import { liveQuery } from 'dexie';
 	import { db } from '$lib/personalities.js';
 	import { onMount } from 'svelte';
+	import { slide } from 'svelte/transition';
 
 	let personalities = liveQuery(() => db.personalities.toArray());
 
 	export let message = { content: '', role: 'system' };
 	export let temperature = 0.9;
 	export let selected = 'default';
+	let hidden = true;
 
 	let newpersonalityname = '';
 	async function changePersonality(event) {
@@ -54,8 +56,13 @@
 </script>
 
 <div class="flex flex-col border-2 border-purple-500 rounded">
-	<div class="border-b-2 text-center text-white border-white">Personality Module (beta)</div>
-	<div class="m-2">
+	<div
+		class="border-b-2 text-center text-white border-white cursor-pointer"
+		on:click={() => (hidden = !hidden)}
+	>
+		≡ Personality Module (beta)
+	</div>
+	<div class="m-2" class:hidden>
 		<textarea
 			id="personality"
 			bind:value={message.content}

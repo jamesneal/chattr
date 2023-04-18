@@ -12,7 +12,7 @@ export const actions = {
       model: 'gpt-3.5-turbo',
       messages: messages,
     }).catch((err) => {
-      return { error: err }
+      return { error: err, reply: reply }
     })
     return { message: reply.data.choices[0].message }
   }

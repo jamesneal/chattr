@@ -31,19 +31,9 @@
 	 */
 	let message = { content: '', role: 'user' };
 	let loading = false;
-	function scrollToBottom() {
-		if (messagebox) {
-			messagebox.scrollIntoView(false);
-			textentrybox.focus();
-		}
-	}
-
-	$: if (!loading) {
-		scrollToBottom();
-	}
 
 	onMount(() => {
-		scrollToBottom();
+		textentrybox.focus();
 	});
 
 	function handleKeypress(event) {
@@ -60,6 +50,21 @@
 
 	function clearMessages() {
 		messages = [];
+	}
+
+	function scrollToBottom() {
+		if (messagebox) {
+			messagebox.scrollTop = messagebox.scrollHeight;
+
+			textentrybox.focus();
+		}
+	}
+
+	onMount(() => {
+		scrollToBottom();
+		textentrybox.focus();
+	});
+	$: if (!loading) {
 		scrollToBottom();
 	}
 
@@ -119,7 +124,7 @@
 	// Remove all messages after this one from the messages array
 	function reload(index) {
 		console.log('Reloading from message ' + index);
-		messages = messages.slice(0, index + 1);
+		messages = messages.slice(0, index);
 		let mymessages = [];
 		if (personality.content !== '') {
 			mymessages = [personality, ...messages];
@@ -131,33 +136,36 @@
 </script>
 
 <!-- The page has two columns. The left one is w-1/4 the right is w-3/4 and contains all the messages. -->
-<div class="flex flex-col md:flex-row">
-	<div class="mr-4 min-w-fit max-w-fit">
+<div class="appbox flex flex-row flex-wrap md:flex-no-wrap">
+	<div class="mr-4 w-full md:w-1/4">
 		<PersonalityModule bind:message={personality} />
 	</div>
-	<div class="w-full">
-		<div class=" h-screen">
-			<div class="content-center">
-				{#each messages as message, i}
-					<div id="message_{i}" class="message" transition:slide>
-						<div class="role">{message.role == 'user' ? 'You' : 'GPT'}</div>
-						<div
-							class="content"
-							contenteditable="true"
-							on:blur={(event) => updateContent(event, message)}
-						>
+	<div class="flex flex-col h-full relative w-full md:w-4/6 border-2 rounded">
+		<div class="grow overflow-scroll content-center">
+			{#each messages as message, i}
+				<div id="message_{i}" class="message" transition:slide>
+					<div class="float-right bottom-0">
+						<button on:click={() => reload(i)}>♻️</button>
+					</div>
+
+					<div class="role">{message.role == 'user' ? 'You' : 'GPT'}</div>
+					<div
+						class="content"
+						contenteditable="true"
+						on:blur={(event) => updateContent(event, message)}
+					>
+						{#if message.role == 'user'}
+							{message.content}
+						{:else}
 							{@html marked(message.content)}
-						</div>
-						{#if changed[i]}
-							<div class="float-right">
-								<button on:click={() => reload(i)}>Reload</button>
-							</div>
 						{/if}
 					</div>
-				{/each}
-			</div>
-			<div class:loading bind:this={messagebox} class="textentry-row w-full">
-				<form class="w-full">
+				</div>
+			{/each}
+		</div>
+		<div class:loading bind:this={messagebox} class="textentry-row flex flex-row">
+			<form class="w-full">
+				<div class="grow">
 					<textarea
 						placeholder={loading ? 'Loading....' : ''}
 						readonly={loading}
@@ -168,6 +176,8 @@
 						bind:this={textentrybox}
 						class="block p-2.5 w-full text-sm text-gray-900 bg-white rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
 					/>
+				</div>
+				<div>
 					<button
 						type="submit"
 						on:click={postMessage}
@@ -186,15 +196,15 @@
 						<span class="sr-only">Send message</span>
 					</button>
 					<button class="button bg-red-300 ml-4" on:click={clearMessages}>Clear</button>
-				</form>
-			</div>
+				</div>
+			</form>
 		</div>
 	</div>
 </div>
 
 <style lang="postcss">
 	.message {
-		@apply p-4 border border-red-700 shadow-inner;
+		@apply p-4 border border-red-700 shadow-inner whitespace-normal break-words;
 		color: theme(colors.white);
 	}
 	.role {
@@ -222,7 +232,7 @@
 	}
 	.textentry-row {
 		/* Div should be Full width */
-		@apply flex flex-row drop-shadow-2xl;
+		width: 100%;
 	}
 
 	/* Add some text to the top of the readonly textarea */
@@ -249,5 +259,13 @@
 
 	.pulse:hover {
 		animation: pulse 2s ease-out infinite;
+	}
+
+	.messagewindow {
+		height: 90vh;
+	}
+
+	.appbox {
+		height: 90vh;
 	}
 </style>
