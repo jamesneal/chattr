@@ -12,7 +12,7 @@ export const actions = {
 
     // If there are errors, catch them and return them
     const reply = await openai.createChatCompletion({
-      model: options.model,
+      model: options.model || 'gpt-3.5-turbo',
       messages: messages,
     }).catch((err) => {
       return { error: err, reply: reply }

@@ -195,8 +195,8 @@
 	<div class="mr-4 w-full md:w-1/4">
 		<PersonalityModule bind:message={personality} />
 
-		<div class="chatselect">
-			<select bind:value={options.model}>
+		<div class="modelselect w-full">
+			<select class="w-full" bind:value={options.model}>
 				<option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
 				<option value="gpt-4">GPT4</option>
 			</select>
