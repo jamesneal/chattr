@@ -4,10 +4,11 @@
 	import PersonalityModule from '$lib/PersonalityModule.svelte';
 	import Message from '$lib/Message.svelte';
 	import { marked } from 'marked';
-	import { onMount, afterUpdate, beforeUpdate } from 'svelte';
+	import { onMount, afterUpdate, beforeUpdate, tick } from 'svelte';
 	import { slide } from 'svelte/transition';
 	import axios from 'axios';
 	import axiosRetry from 'axios-retry';
+	import { each } from 'svelte/internal';
 
 	/**
 	 * @type {Array<{content: string, role: string}>}
@@ -41,6 +42,7 @@
 	let message = { content: '', role: 'user' };
 	let loading = false;
 	let loading_message = 'Loading...';
+	let options = { model: 'gpt-4' };
 
 	let autoscroll;
 
@@ -76,17 +78,6 @@
 		messages = [];
 	}
 
-	function scrollToBottom() {
-		if (scrolltarget) {
-			messagelist.scroll({
-				top: messagelist.scrollHeight,
-				behavior: 'smooth'
-			});
-
-			textentrybox.focus();
-		}
-	}
-
 	onMount(() => {
 		textentrybox.focus();
 	});
@@ -95,7 +86,8 @@
 		loading = true;
 		loading_message = 'Loading...';
 		const data = new URLSearchParams({
-			messages: JSON.stringify(outgoing_messages)
+			messages: JSON.stringify(outgoing_messages),
+			options: JSON.stringify(options)
 		});
 		axiosRetry(axios, {
 			retries: 5,
@@ -180,21 +172,47 @@
 		}
 		fetchMessages(mymessages);
 	}
+
+	$: messages, scrollToBottom();
+
+	async function scrollToBottom() {
+		await tick();
+		if (scrolltarget) {
+			scrolltarget.scrollIntoView(false, {
+				behavior: 'smooth',
+				block: 'center',
+				inline: 'nearest'
+			});
+			console.log('Yep');
+		}
+
+		return;
+	}
 </script>
 
 <!-- The page has two columns. The left one is w-1/4 the right is w-3/4 and contains all the messages. -->
 <div class="appbox flex flex-row flex-wrap md:flex-no-wrap">
 	<div class="mr-4 w-full md:w-1/4">
 		<PersonalityModule bind:message={personality} />
+
+		<div class="chatselect">
+			<select bind:value={options.model}>
+				<option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+				<option value="gpt-4">GPT4</option>
+			</select>
+		</div>
 	</div>
 	<div class="h-full w-full md:w-4/6">
 		<div class="flex flex-col h-full relative w-full border-2 rounded">
-			<div bind:this={messagelist} class="grow overflow-y-scroll content-center">
+			<div
+				bind:this={messagelist}
+				class="grow overflow-y-scroll snap-proximity snap-y content-center"
+			>
 				{#each messages as message, i}
 					<Message
 						bind:message={message.content}
 						bind:role={message.role}
-						onblur={(event) => updateContent(event, message)}
+						blur={(event) => updateContent(event, message)}
 						reload={() => reload(i)}
 					/>
 				{/each}
@@ -204,7 +222,7 @@
 						<div class="error">{error.content}</div>
 					</div>
 				{/each}
-				<div bind:this={scrolltarget} class="messagebox" />
+				<div bind:this={scrolltarget} class="messagebox snap-start text-green-500" />
 			</div>
 			<div class:loading class="textentry-row flex flex-row">
 				<form class="w-full">
@@ -315,5 +333,9 @@
 
 	.appbox {
 		height: 90vh;
+	}
+
+	.messagebox {
+		scroll-margin-bottom: 100px;
 	}
 </style>
