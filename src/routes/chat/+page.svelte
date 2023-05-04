@@ -42,7 +42,7 @@
 	let message = { content: '', role: 'user' };
 	let loading = false;
 	let loading_message = 'Loading...';
-	let options = { model: 'gpt-4' };
+	let options = { model: 'gpt-3.5-turbo' };
 
 	let autoscroll;
 
