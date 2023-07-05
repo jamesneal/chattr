@@ -1,6 +1,6 @@
 <script>
 	export let count = 0;
-	export let message = '';
+	export let message;
 	export let role = '';
 	export let blur = () => {};
 	export let reload = () => {};
@@ -8,25 +8,30 @@
 	import { marked } from 'marked';
 
 	import { slide } from 'svelte/transition';
+
+	function deleteMessage(e) {
+		message.role = 'deleted';
+	}
 </script>
 
 <div id="message_{count}" class="message snap-start" transition:slide>
 	<div class="float-right bottom-0">
 		<button title="Regenerate the conversation from this point down." on:click={reload}>♻️</button>
+		<button title="Delete this line" on:click={deleteMessage}>❌</button>
 	</div>
 
-	<div class="role">{role == 'user' ? 'You' : 'GPT'}</div>
+	<div class="role">{message.role == 'user' ? 'You' : 'GPT'}</div>
 	<div
 		class="content flex flex-col"
-		class:text-right={role == 'user'}
+		class:text-right={message.role == 'user'}
 		contenteditable="true"
 		on:blur={blur}
 	>
 		<div class="justify-end place-content-end text-left">
-			{#if role == 'user'}
-				{message}
+			{#if message.role == 'user'}
+				{message.content}
 			{:else}
-				{@html marked(message)}
+				{@html marked(message.content)}
 			{/if}
 		</div>
 	</div>
@@ -34,7 +39,7 @@
 
 <style lang="postcss">
 	.message {
-		@apply p-4 border border-red-700 shadow-inner whitespace-normal break-words shrink;
+		@apply p-4 border shadow-inner whitespace-normal break-words shrink;
 		color: theme(colors.white);
 	}
 	.role {

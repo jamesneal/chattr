@@ -1,14 +1,33 @@
 <!-- This does the openai "chat" service. -->
 <script>
-	// Import marked
 	import PersonalityModule from '$lib/PersonalityModule.svelte';
 	import Message from '$lib/Message.svelte';
-	import { marked } from 'marked';
 	import { onMount, afterUpdate, beforeUpdate, tick } from 'svelte';
-	import { slide } from 'svelte/transition';
+	import { slide, fly } from 'svelte/transition';
 	import axios from 'axios';
 	import axiosRetry from 'axios-retry';
-	import { each } from 'svelte/internal';
+	import { conversations, uuid } from '$lib/conversations.js';
+	import Conversations from '$lib/Conversations.svelte';
+	import Chat from '$lib/Chat.svelte';
+
+	function generateUUID() {
+		// Public Domain/MIT
+		var d = new Date().getTime(); //Timestamp
+		var d2 = (performance && performance.now && performance.now() * 1000) || 0; //Time in microseconds since page-load or 0 if unsupported
+		return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+			var r = Math.random() * 16; //random number between 0 and 16
+			if (d > 0) {
+				//Use timestamp until depleted
+				r = (d + r) % 16 | 0;
+				d = Math.floor(d / 16);
+			} else {
+				//Use microseconds since page-load if supported
+				r = (d2 + r) % 16 | 0;
+				d2 = Math.floor(d2 / 16);
+			}
+			return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+		});
+	}
 
 	/**
 	 * @type {Array<{content: string, role: string}>}
@@ -33,7 +52,7 @@
 	let textentrybox;
 
 	let personality = { content: '', role: 'system' };
-
+	let newChat = false;
 	let selectedpersonality = 'default';
 
 	/**
@@ -43,12 +62,32 @@
 	let loading = false;
 	let loading_message = 'Loading...';
 	let options = { model: 'gpt-3.5-turbo' };
-
+	let title = '';
 	let autoscroll;
+
+	function newChatObj(uuid = null) {
+		return {
+			messages: [],
+			options: {},
+			uuid: uuid || generateUUID(),
+			title: new Date().toLocaleString('en-US'),
+			default_title: true
+		};
+	}
+	let chat = newChatObj();
 
 	onMount(() => {
 		textentrybox.focus();
+		$uuid.uuid = generateUUID();
 	});
+
+	$: storeConversation(chat);
+
+	function storeConversation(conv) {
+		if (conv.messages.length === 0) return;
+		console.log('storing conversation', conv);
+		$conversations[conv.uuid] = conv;
+	}
 
 	beforeUpdate(() => {
 		if (messagelist) {
@@ -76,6 +115,8 @@
 
 	function clearMessages() {
 		messages = [];
+		$uuid.uuid = generateUUID();
+		chat = $conversations[$uuid.uuid];
 	}
 
 	onMount(() => {
@@ -112,6 +153,8 @@
 					return;
 				}
 				messages = [...messages, { content: resp[3], role: resp[2] }];
+				storeConversation({ messages, uuid: $uuid.uuid, options, title });
+
 				loading = false;
 			})
 			.catch((error) => {
@@ -173,8 +216,6 @@
 		fetchMessages(mymessages);
 	}
 
-	$: messages, scrollToBottom();
-
 	async function scrollToBottom() {
 		await tick();
 		if (scrolltarget) {
@@ -188,30 +229,67 @@
 
 		return;
 	}
+
+	function newConversation() {
+		$uuid.uuid = generateUUID();
+		chat = $conversations[$uuid.uuid] = newChatObj($uuid.uuid);
+		console.log('YEAHHH');
+	}
+	function loadConversation(uuid) {
+		console.log('loading conversation', uuid);
+		let conv = $conversations[uuid];
+		if (conv) {
+			messages = conv.messages;
+			options = conv.options;
+		}
+	}
+	function loadContext(id) {
+		console.log('loading context');
+		loadConversation(id);
+	}
+	let hidden = false;
 </script>
 
 <!-- The page has two columns. The left one is w-1/4 the right is w-3/4 and contains all the messages. -->
-<div class="appbox flex flex-row flex-wrap md:flex-no-wrap">
-	<div class="mr-4 w-full md:w-1/4">
-		<PersonalityModule bind:message={personality} />
-
-		<div class="modelselect w-full">
-			<select class="w-full" bind:value={options.model}>
-				<option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-				<option value="gpt-4">GPT4</option>
-			</select>
+<div class="appbox flex flex-row flex-wrap md:flex-no-wrap transition-all">
+	<div class="mr-4 w-min h-full transition-all" class:w-0={hidden}>
+		<div
+			class="border-2 w-5 text-white transition-all"
+			class:rotate-90={hidden}
+			on:click={() => {
+				hidden = !hidden;
+			}}
+		>
+			▶
 		</div>
+		{#if !hidden}
+			<div class="h-full w-[400px] bg-surface-3" transition:fly={{ x: -100 }}>
+				<PersonalityModule bind:message={personality} />
+				<div class="modelselect w-full border-2 border-purple-500 my-2 rounded-sm p-2">
+					<label class="text-white" for="model">Model</label>
+					<select class="w-full text-purple-950 font-bold" id="model" bind:value={options.model}>
+						<option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+						<option value="gpt-4">GPT4</option>
+					</select>
+				</div>
+				<Conversations bind:selected={chat} />
+			</div>
+		{/if}
 	</div>
-	<div class="h-full w-full md:w-4/6">
+	<div class="h-full w-full md:w-4/6 flex-grow transition-all">
+		<Chat bind:chat newChat={newConversation} />
 		<div class="flex flex-col h-full relative w-full border-2 rounded">
+			<div class="flex flex-row w-full border-2">
+				<div class="flex-grow-0">Title:</div>
+				<div class="flex-grow"><input bind:value={title} class="w-full input px-2" /></div>
+			</div>
 			<div
 				bind:this={messagelist}
 				class="grow overflow-y-scroll snap-proximity snap-y content-center"
 			>
 				{#each messages as message, i}
 					<Message
-						bind:message={message.content}
-						bind:role={message.role}
+						bind:message
 						blur={(event) => updateContent(event, message)}
 						reload={() => reload(i)}
 					/>
@@ -304,6 +382,10 @@
 	/* Add some text to the top of the readonly textarea */
 	.readonly {
 		background-color: theme(colors.gray.500);
+	}
+
+	.appbox > * {
+		@apply text-white;
 	}
 
 	@keyframes pulse {

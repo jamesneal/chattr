@@ -10,7 +10,7 @@
 	export let message = { content: '', role: 'system' };
 	export let temperature = 0.9;
 	export let selected = 'default';
-	let hidden = true;
+	let hidden = false;
 
 	let newpersonalityname = '';
 	async function changePersonality(event) {
@@ -56,10 +56,7 @@
 </script>
 
 <div class="flex flex-col border-2 border-purple-500 rounded">
-	<div
-		class="border-b-2 text-center text-white border-white cursor-pointer"
-		on:click={() => (hidden = !hidden)}
-	>
+	<div class="border-b-2 text-center text-white border-white cursor-pointer">
 		≡ Personality Module (beta)
 	</div>
 	<div class="m-2" class:hidden>
