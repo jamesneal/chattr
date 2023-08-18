@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { getContext } from 'svelte';
+	import { tick } from 'svelte';
+
 	import { options } from '$lib/optionsstore.js';
 	export let chat;
 	export let personality;
@@ -11,13 +13,13 @@
 	let loading = false;
 
 	import { onMount } from 'svelte';
-	const scrollToBottom = (node) => {
-		const scroll = () =>
-			node.scroll({
-				top: node.scrollHeight,
-				behavior: 'smooth'
-			});
-		scroll();
+	const scrollToBottom = async (node) => {
+		const scroll = async () => await tick();
+		node.scroll({
+			top: node.scrollHeight,
+			behavior: 'smooth'
+		});
+		await scroll();
 		return { update: scroll };
 	};
 
