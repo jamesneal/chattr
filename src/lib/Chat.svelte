@@ -12,16 +12,23 @@
 	let input;
 	let loading = false;
 
-	import { onMount } from 'svelte';
-	const scrollToBottom = async (node) => {
-		const scroll = async () => await tick();
-		node.scroll({
-			top: node.scrollHeight,
-			behavior: 'smooth'
+	import { onMount, afterUpdate } from 'svelte';
+
+	afterUpdate(() => {
+		tick().then(() => {
+			messagebox.scrollTo(0, messagebox.scrollHeight);
 		});
-		await scroll();
-		return { update: scroll };
-	};
+	});
+
+	function scrollToBottom(node) {
+		return {
+			update() {
+				tick().then(() => {
+					node.scrollTop = node.scrollHeight;
+				});
+			}
+		};
+	}
 
 	onMount(() => {
 		console.log(chat);
@@ -115,12 +122,7 @@
 		<div class="mx-2 overflow-auto flex-grow" on:click={summarizeConversation}>{chat.title}</div>
 		<div class="right-0 w-1/4 text-right">{chat.date.toLocaleString('en-US')}</div>
 	</div>
-	<div
-		bind:this={messagebox}
-		id="messagebox"
-		class="overflow-scroll"
-		use:scrollToBottom={chat.messages}
-	>
+	<div bind:this={messagebox} id="messagebox" class="overflow-scroll" use:scrollToBottom>
 		{#each chat.messages as message, i}
 			<Message num={i} bind:message reload={regenerate} />
 		{/each}
