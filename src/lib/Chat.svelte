@@ -101,7 +101,7 @@
 					{
 						role: 'system',
 						content:
-							'Concisely summarize this conversation so far into a single sentence title. Be funny and sarcastic.'
+							'Concisely summarize this conversation so far into a single sentence title. Be silly and sarcastic.'
 					}
 				]
 			}),

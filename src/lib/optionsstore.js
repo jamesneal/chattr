@@ -1,3 +1,6 @@
 import { writable } from 'svelte/store';
 
-export const options = writable({ model: 'gpt-3.5-turbo' });
+import { localStorageStore } from '@skeletonlabs/skeleton';
+
+
+export const options = localStorageStore('chatOptions', { model: 'gpt-3.5-turbo' });

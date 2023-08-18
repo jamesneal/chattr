@@ -26,18 +26,6 @@
 	 */
 	let errors = [];
 
-	// Define the JSDoc type for the messagebox variable.  It's an object.
-	/**
-	 * @type {Object}
-	 */
-	let scrolltarget;
-	let messagelist;
-
-	/**
-	 * @type {Object}
-	 */
-	let textentrybox;
-
 	let personality = { content: '', role: 'system' };
 
 	/**
@@ -75,36 +63,6 @@
 		$conversations[conv.uuid] = conv;
 	}
 
-	beforeUpdate(() => {
-		if (messagelist) {
-			autoscroll =
-				messagelist &&
-				messagelist.offsetHeight + messagelist.scrollTop > messagelist.scrollHeight - 20;
-		}
-	});
-
-	afterUpdate(() => {
-		if (autoscroll) messagelist.scrollTo(0, messagelist.scrollHeight);
-	});
-
-	function handleKeypress(event) {
-		if (event.metaKey && event.keyCode === 13) {
-			// Command+Enter was pressed
-			myFunction();
-		}
-	}
-
-	function myFunction() {
-		console.log('Command+Enter was pressed');
-		// Insert your desired function here
-	}
-
-	function clearMessages() {
-		messages = [];
-		$uuid.uuid = generateUUID();
-		chat = $conversations[$uuid.uuid];
-	}
-
 	let changed = [];
 
 	// Remove all messages after this one from the messages array
@@ -113,14 +71,6 @@
 		$uuid.uuid = generateUUID();
 		chat = $conversations[$uuid.uuid] = newChatObj($uuid.uuid);
 		console.log('YEAHHH');
-	}
-	function loadConversation(uuid) {
-		console.log('loading conversation', uuid);
-		let conv = $conversations[uuid];
-		if (conv) {
-			messages = conv.messages;
-			$options = conv.options;
-		}
 	}
 	let hidden = false;
 </script>
@@ -163,10 +113,6 @@
 	.role {
 		@apply text-sm font-bold;
 	}
-	.content {
-		@apply text-lg;
-		white-space: pre-wrap;
-	}
 
 	textarea {
 		width: 100%;
@@ -180,13 +126,6 @@
 	.button {
 		@apply pulse px-4 py-2 text-white bg-blue-500 rounded-md hover:bg-blue-600 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-400;
 		@apply bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded;
-	}
-	.textentry {
-		@apply bg-purple-700 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded;
-	}
-	.textentry-row {
-		/* Div should be Full width */
-		width: 100%;
 	}
 
 	/* Add some text to the top of the readonly textarea */
