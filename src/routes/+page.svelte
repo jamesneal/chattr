@@ -10,6 +10,13 @@
 	var textbox = form?.prompt || '';
 
 	var loading = false;
+
+	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
+
+	onMount(() => {
+		goto('/chat');
+	});
 	// If form changes, update the textbox.
 </script>
 
