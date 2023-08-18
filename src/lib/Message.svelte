@@ -4,9 +4,9 @@
 	export let role = '';
 	export let blur = () => {};
 	export let reload = () => {};
+	export let num;
 
 	import { marked } from 'marked';
-
 	import { slide } from 'svelte/transition';
 
 	function deleteMessage(e) {
@@ -16,7 +16,9 @@
 
 <div id="message_{count}" class="message snap-start" transition:slide>
 	<div class="float-right bottom-0">
-		<button title="Regenerate the conversation from this point down." on:click={reload}>♻️</button>
+		<button id={num} title="Regenerate the conversation from this point down." on:click={reload}
+			>♻️</button
+		>
 		<button title="Delete this line" on:click={deleteMessage}>❌</button>
 	</div>
 

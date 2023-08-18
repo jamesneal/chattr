@@ -1,32 +1,19 @@
 <!-- This does the openai "chat" service. -->
 <script>
 	import PersonalityModule from '$lib/PersonalityModule.svelte';
-	import Message from '$lib/Message.svelte';
 	import { onMount, afterUpdate, beforeUpdate, tick } from 'svelte';
 	import { slide, fly } from 'svelte/transition';
-	import axios from 'axios';
-	import axiosRetry from 'axios-retry';
 	import { conversations, uuid } from '$lib/conversations.js';
+	import { options } from '$lib/optionsstore.js';
 	import Conversations from '$lib/Conversations.svelte';
 	import Chat from '$lib/Chat.svelte';
+	import { v4 as uuidv4 } from 'uuid';
 
+	import { Drawer, drawerStore } from '@skeletonlabs/skeleton';
+
+	import { setContext } from 'svelte';
 	function generateUUID() {
-		// Public Domain/MIT
-		var d = new Date().getTime(); //Timestamp
-		var d2 = (performance && performance.now && performance.now() * 1000) || 0; //Time in microseconds since page-load or 0 if unsupported
-		return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-			var r = Math.random() * 16; //random number between 0 and 16
-			if (d > 0) {
-				//Use timestamp until depleted
-				r = (d + r) % 16 | 0;
-				d = Math.floor(d / 16);
-			} else {
-				//Use microseconds since page-load if supported
-				r = (d2 + r) % 16 | 0;
-				d2 = Math.floor(d2 / 16);
-			}
-			return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
-		});
+		return uuidv4();
 	}
 
 	/**
@@ -52,8 +39,6 @@
 	let textentrybox;
 
 	let personality = { content: '', role: 'system' };
-	let newChat = false;
-	let selectedpersonality = 'default';
 
 	/**
 	 * @type {{content: string, role: string}}
@@ -61,9 +46,10 @@
 	let message = { content: '', role: 'user' };
 	let loading = false;
 	let loading_message = 'Loading...';
-	let options = { model: 'gpt-3.5-turbo' };
 	let title = '';
 	let autoscroll;
+
+	$: setContext('chatOptions', { options });
 
 	function newChatObj(uuid = null) {
 		return {
@@ -71,13 +57,13 @@
 			options: {},
 			uuid: uuid || generateUUID(),
 			title: new Date().toLocaleString('en-US'),
+			date: new Date(),
 			default_title: true
 		};
 	}
 	let chat = newChatObj();
 
 	onMount(() => {
-		textentrybox.focus();
 		$uuid.uuid = generateUUID();
 	});
 
@@ -119,116 +105,9 @@
 		chat = $conversations[$uuid.uuid];
 	}
 
-	onMount(() => {
-		textentrybox.focus();
-	});
-
-	function fetchMessages(outgoing_messages) {
-		loading = true;
-		loading_message = 'Loading...';
-		const data = new URLSearchParams({
-			messages: JSON.stringify(outgoing_messages),
-			options: JSON.stringify(options)
-		});
-		axiosRetry(axios, {
-			retries: 5,
-			retryDelay: axiosRetry.exponentialDelay,
-			onRetry: () => {
-				console.log('Retrying...');
-				loading_message = 'Retrying...';
-			},
-			retryCondition: (error) => {
-				return true;
-			}
-		});
-		axios
-			.post('/chat', data, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } })
-			.then((response) => {
-				var resp = JSON.parse(response.data.data);
-				if (resp.error) {
-					message.content = messages[messages.length - 1].content;
-
-					messages = [...messages, { content: resp.error, role: 'error' }];
-					loading = false;
-					return;
-				}
-				messages = [...messages, { content: resp[3], role: resp[2] }];
-				storeConversation({ messages, uuid: $uuid.uuid, options, title });
-
-				loading = false;
-			})
-			.catch((error) => {
-				console.error('Error:', error);
-				errors = [{ content: error, role: 'error' }];
-				loading = false;
-				message.content = messages[messages.length - 1].content;
-				// remove the last message
-				messages = messages.slice(0, -1);
-			});
-	}
-
-	function postMessage() {
-		errors = [];
-		let messages_to_send = [];
-		if (personality.content !== '') {
-			messages_to_send = [personality, ...messages, message];
-		} else {
-			messages_to_send = [...messages, message];
-		}
-		messages = [...messages, message];
-
-		message = { content: '', role: 'user' };
-		message.content = '';
-		changed = [];
-
-		console.log('sending', messages_to_send);
-		// Use fetch to send a POST request to the server.
-		fetchMessages(messages_to_send);
-	}
-
 	let changed = [];
 
-	function updateContent(event, message) {
-		message.content = event.target.innerText;
-		changed[messages.indexOf(message)] = true;
-	}
-
 	// Remove all messages after this one from the messages array
-	function reload(index) {
-		console.log('Reloading from message ' + index);
-		messages = messages.slice(0, index);
-		let mymessages = [];
-		if (personality.content !== '') {
-			mymessages = [personality, ...messages];
-		} else {
-			mymessages = [...messages];
-		}
-		fetchMessages(mymessages);
-	}
-
-	function continueConversation() {
-		let mymessages = [];
-		if (personality.content !== '') {
-			mymessages = [personality, ...messages];
-		} else {
-			mymessages = [...messages];
-		}
-		fetchMessages(mymessages);
-	}
-
-	async function scrollToBottom() {
-		await tick();
-		if (scrolltarget) {
-			scrolltarget.scrollIntoView(false, {
-				behavior: 'smooth',
-				block: 'center',
-				inline: 'nearest'
-			});
-			console.log('Yep');
-		}
-
-		return;
-	}
 
 	function newConversation() {
 		$uuid.uuid = generateUUID();
@@ -240,108 +119,39 @@
 		let conv = $conversations[uuid];
 		if (conv) {
 			messages = conv.messages;
-			options = conv.options;
+			$options = conv.options;
 		}
-	}
-	function loadContext(id) {
-		console.log('loading context');
-		loadConversation(id);
 	}
 	let hidden = false;
 </script>
 
-<!-- The page has two columns. The left one is w-1/4 the right is w-3/4 and contains all the messages. -->
-<div class="appbox flex flex-row flex-wrap md:flex-no-wrap transition-all">
-	<div class="mr-4 w-min h-full transition-all" class:w-0={hidden}>
-		<div
-			class="border-2 w-5 text-white transition-all"
-			class:rotate-90={hidden}
-			on:click={() => {
-				hidden = !hidden;
-			}}
-		>
-			▶
+<Drawer>
+	<div class="h-full w-[400px] bg-surface-3" transition:fly={{ x: -100 }}>
+		<PersonalityModule bind:message={personality} />
+		<div class="modelselect w-full border-2 border-purple-500 my-2 rounded-sm p-2">
+			<label class="text-white" for="model">Model</label>
+			<select class="w-full text-purple-950 font-bold" id="model" bind:value={$options.model}>
+				<option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+				<option value="gpt-4">GPT4</option>
+			</select>
 		</div>
-		{#if !hidden}
-			<div class="h-full w-[400px] bg-surface-3" transition:fly={{ x: -100 }}>
-				<PersonalityModule bind:message={personality} />
-				<div class="modelselect w-full border-2 border-purple-500 my-2 rounded-sm p-2">
-					<label class="text-white" for="model">Model</label>
-					<select class="w-full text-purple-950 font-bold" id="model" bind:value={options.model}>
-						<option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-						<option value="gpt-4">GPT4</option>
-					</select>
-				</div>
-				<Conversations bind:selected={chat} />
-			</div>
-		{/if}
+		<Conversations bind:selected={chat} />
+	</div>
+</Drawer>
+
+<!-- The page has two columns. The left one is w-1/4 the right is w-3/4 and contains all the messages. -->
+<div class="flex flex-row flex-wrap md:flex-no-wrap transition-all h-screen">
+	<div
+		class="w-5 text-white transition-all"
+		class:rotate-90={hidden}
+		on:click={() => {
+			drawerStore.open({ width: 'w-[400px]' });
+		}}
+	>
+		≡
 	</div>
 	<div class="h-full w-full md:w-4/6 flex-grow transition-all">
-		<Chat bind:chat newChat={newConversation} />
-		<div class="flex flex-col h-full relative w-full border-2 rounded">
-			<div class="flex flex-row w-full border-2">
-				<div class="flex-grow-0">Title:</div>
-				<div class="flex-grow"><input bind:value={title} class="w-full input px-2" /></div>
-			</div>
-			<div
-				bind:this={messagelist}
-				class="grow overflow-y-scroll snap-proximity snap-y content-center"
-			>
-				{#each messages as message, i}
-					<Message
-						bind:message
-						blur={(event) => updateContent(event, message)}
-						reload={() => reload(i)}
-					/>
-				{/each}
-				{#each errors as error, i}
-					<div id="error_{i}" class="message" transition:slide>
-						<div class="role">{message.role == 'user' ? 'You' : 'GPT'}</div>
-						<div class="error">{error.content}</div>
-					</div>
-				{/each}
-				<div bind:this={scrolltarget} class="messagebox snap-start text-green-500" />
-			</div>
-			<div class:loading class="textentry-row flex flex-row">
-				<form class="w-full">
-					<div class="grow">
-						<textarea
-							placeholder={loading ? loading_message : ''}
-							readonly={loading}
-							id="textentrybox"
-							class:readonly={loading}
-							on:keypress={handleKeypress}
-							bind:value={message.content}
-							bind:this={textentrybox}
-							class="block p-2.5 w-full text-sm text-gray-900 bg-white rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-						/>
-					</div>
-					<div>
-						<button
-							type="submit"
-							on:click={postMessage}
-							class="button align-middle p-2 text-blue-600 rounded-full cursor-pointer hover:bg-blue-100 dark:text-blue-500 dark:hover:bg-gray-600"
-						>
-							<svg
-								aria-hidden="true"
-								class="w-6 h-6 rotate-90"
-								fill="currentColor"
-								viewBox="0 0 20 20"
-								xmlns="http://www.w3.org/2000/svg"
-								><path
-									d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"
-								/></svg
-							>
-							<span class="sr-only">Send message</span>
-						</button>
-						<button class="button bg-red-300 ml-4" on:click={clearMessages}>Clear</button>
-						<button class="button ml-4" id="continue" on:click={continueConversation}
-							>Continue</button
-						>
-					</div>
-				</form>
-			</div>
-		</div>
+		<Chat bind:chat newChat={newConversation} bind:personality />
 	</div>
 </div>
 

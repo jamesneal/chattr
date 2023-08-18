@@ -4,15 +4,7 @@
 	import '../app.css';
 </script>
 
-<h1 class="text-3xl text-center font-bold">Chattr!</h1>
-<p class="text-center">Welcome to Chattr, a simple chat app built with Svelte.</p>
-
-<div class="flex justify-center border-red-700 text-black">
-	<!-- Div that takes up 1/2 of the screen -->
-	<div class="w-full mx-2">
-		<slot />
-	</div>
-</div>
+<slot />
 
 <style lang="postcss">
 	:global(html) {

@@ -12,8 +12,10 @@
 	}
 </script>
 
-<div class="flow w-full border-purple-500 border-2 rounded-sm">
-	<div class="text-bold border-b-2">Conversations</div>
+<div class="w-full border-purple-500 border-2 rounded-sm">
+	<div class="justify-between flex flex-row">
+		<div class="text-bold border-b-2 flex-grow">Conversations</div>
+	</div>
 	{#each Object.keys($conversations) as key}
 		{#if $conversations[key].messages.length >= 0}
 			<div class="flex flex-row">
