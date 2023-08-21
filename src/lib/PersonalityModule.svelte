@@ -2,8 +2,7 @@
 	// import the persoanlities store
 	import { liveQuery } from 'dexie';
 	import { db } from '$lib/personalities.js';
-	import { onMount } from 'svelte';
-	import { slide } from 'svelte/transition';
+	import { options } from '$lib/optionsstore.js';
 
 	let personalities = liveQuery(() => db.personalities.toArray());
 
@@ -33,7 +32,7 @@
 		const personality = {
 			name: newpersonalityname,
 			message: message.content,
-			temperature: temperature
+			temperature
 		};
 		const id = await db.personalities.add(personality);
 		selected = id;
@@ -53,6 +52,8 @@
 		db.personalities.delete(personality.id);
 		selected = 'default';
 	}
+
+	$: $options.temperature = temperature;
 </script>
 
 <div class="flex flex-col border-2 border-purple-500 rounded">
@@ -66,7 +67,7 @@
 			placeholder="You are a friendly and helpful chat AI.  You like telling jokes. "
 		/><br />
 		<label for="temperature">Temperature (how "creative" the response is)</label>
-		<input type="range" class="w-full" min="0" max="1" step="0.1" bind:value={temperature} />
+		<input type="range" class="w-full" min="0" max="2" step="0.1" bind:value={temperature} />
 		<div class="text-white text-center">{temperature}</div>
 		<div class="text-white flex flex-row text-center">
 			<div><button on:click={savePersonality} class="button">Save</button></div>

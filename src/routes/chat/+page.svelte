@@ -1,8 +1,8 @@
 <!-- This does the openai "chat" service. -->
 <script>
 	import PersonalityModule from '$lib/PersonalityModule.svelte';
-	import { onMount, afterUpdate, beforeUpdate, tick } from 'svelte';
-	import { slide, fly } from 'svelte/transition';
+	import { onMount } from 'svelte';
+	import { fly } from 'svelte/transition';
 	import { conversations, uuid } from '$lib/conversations.js';
 	import { options } from '$lib/optionsstore.js';
 	import Conversations from '$lib/Conversations.svelte';
@@ -11,7 +11,6 @@
 
 	import { Drawer, drawerStore } from '@skeletonlabs/skeleton';
 
-	import { setContext } from 'svelte';
 	function generateUUID() {
 		return uuidv4();
 	}
@@ -36,8 +35,6 @@
 	let loading_message = 'Loading...';
 	let title = '';
 	let autoscroll;
-
-	$: setContext('chatOptions', { options });
 
 	function newChatObj(uuid = null) {
 		return {

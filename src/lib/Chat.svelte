@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { getContext } from 'svelte';
 	import { tick } from 'svelte';
 
 	import { options } from '$lib/optionsstore.js';
@@ -162,34 +161,4 @@
 </div>
 
 <style lang="postcss">
-	@keyframes pulse {
-		0% {
-			transform: scale(1);
-			opacity: 1;
-		}
-
-		50% {
-			transform: scale(1.05);
-			opacity: 0.7;
-		}
-
-		100% {
-			transform: scale(1);
-			opacity: 1;
-		}
-	}
-
-	.pulse:hover {
-		animation: pulse 2s ease-out infinite;
-	}
-
-	.button {
-		@apply pulse px-4 py-2 text-white bg-blue-500 rounded-md hover:bg-blue-600 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-400;
-		@apply bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded;
-	}
-
-	.messages {
-		scrollbar-width: thin;
-		scrollbar-gutter: stable;
-	}
 </style>

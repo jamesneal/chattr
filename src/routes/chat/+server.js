@@ -17,9 +17,11 @@ export async function POST({ request }) {
   const { messages, options } = await request.json();
   const mymessages = messages.map(({ role, content }) => ({ role, content }));
   console.log(options)
+
   // Ask OpenAI for a streaming completion given the prompt
   const response = await openai.createChatCompletion({
     model: options.model || 'gpt-3.5-turbo',
+    temperature: options.temperature || 0.9,
     stream: true,
     messages: mymessages
   });

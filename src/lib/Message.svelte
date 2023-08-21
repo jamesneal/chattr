@@ -1,7 +1,6 @@
-<script>
+<script lang="ts">
 	export let count = 0;
 	export let message;
-	export let role = '';
 	export let blur = () => {};
 	export let reload = () => {};
 	export let num;
@@ -11,6 +10,12 @@
 
 	function deleteMessage(e) {
 		message.role = 'deleted';
+	}
+	function handleReturn(event) {
+		if (event.key === 'Enter') {
+			event.preventDefault();
+			event.target.blur();
+		}
 	}
 </script>
 
@@ -27,6 +32,7 @@
 		class="content flex flex-col"
 		class:text-right={message.role == 'user'}
 		contenteditable="true"
+		on:keypress={handleReturn}
 		on:blur={blur}
 	>
 		<div class="justify-end place-content-end text-left">
