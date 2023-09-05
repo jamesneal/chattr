@@ -1,5 +1,3 @@
-// import dotenv
-
 import { openai } from '$lib/openai.js';
 import { OpenAIStream, StreamingTextResponse } from 'ai';
 
@@ -11,12 +9,14 @@ export const actions = {
 		var messages = JSON.parse(data.get('messages'));
 		var options = JSON.parse(data.get('options'));
 
+
+
 		// If there are errors, catch them and return them
 		const response = await openai
-			.createChatCompletion({
+			.chat.completions.create({
 				model: options.model || 'gpt-3.5-turbo',
 				stream: true,
-				messages: messages
+				messages: messages,
 			})
 
 		const stream = OpenAIStream(response);

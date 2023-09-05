@@ -4,11 +4,12 @@
 	import { options } from '$lib/optionsstore.js';
 	export let chat;
 	export let personality;
+
 	export let newChat = () => {};
 
 	import Message from './Message.svelte';
 	let message = { content: '', role: 'user' };
-	let input;
+	let input: string = '';
 	let loading = false;
 
 	import { onMount, afterUpdate } from 'svelte';
@@ -93,14 +94,14 @@
 		const response = await fetch('/chat', {
 			method: 'POST',
 			body: JSON.stringify({
-				options: $options,
+				options: {},
 				messages: [
 					personality,
 					...chat.messages,
 					{
 						role: 'system',
 						content:
-							'Concisely summarize this conversation so far into a single sentence title. Be silly and sarcastic.'
+							'Concisely summarize this conversation so far into a single sentence title. Be silly and sarcastic. No quotation marks.'
 					}
 				]
 			}),

@@ -1,7 +1,6 @@
 <script lang="ts">
 	export let count = 0;
 	export let message;
-	export let blur = () => {};
 	export let reload = () => {};
 	export let num;
 
@@ -16,6 +15,9 @@
 			event.preventDefault();
 			event.target.blur();
 		}
+	}
+	function onBlur(event) {
+		message.content = event.target.innerText;
 	}
 </script>
 
@@ -33,7 +35,7 @@
 		class:text-right={message.role == 'user'}
 		contenteditable="true"
 		on:keypress={handleReturn}
-		on:blur={blur}
+		on:blur={onBlur}
 	>
 		<div class="justify-end place-content-end text-left">
 			{#if message.role == 'user'}

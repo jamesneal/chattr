@@ -39,7 +39,7 @@
 		"html2canvas": "^1.4.1",
 		"jspdf": "^2.5.1",
 		"marked": "^4.3.0",
-		"openai": "^3.2.1",
+		"openai": "4.0.0",
 		"openai-edge": "^1.1.1",
 		"uuid": "^9.0.0"
 	}

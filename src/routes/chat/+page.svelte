@@ -67,7 +67,6 @@
 	function newConversation() {
 		$uuid.uuid = generateUUID();
 		chat = $conversations[$uuid.uuid] = newChatObj($uuid.uuid);
-		console.log('YEAHHH');
 	}
 	let hidden = false;
 </script>
@@ -103,67 +102,4 @@
 </div>
 
 <style lang="postcss">
-	.message {
-		@apply p-4 border border-red-700 shadow-inner whitespace-normal break-words;
-		color: theme(colors.white);
-	}
-	.role {
-		@apply text-sm font-bold;
-	}
-
-	textarea {
-		width: 100%;
-		background-color: theme(colors.purple.900);
-		color: theme(colors.white);
-		@apply p-4 border border-red-700 shadow-inner;
-	}
-	textarea:read-only {
-		color: theme(colors.gray.500);
-	}
-	.button {
-		@apply pulse px-4 py-2 text-white bg-blue-500 rounded-md hover:bg-blue-600 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-400;
-		@apply bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded;
-	}
-
-	/* Add some text to the top of the readonly textarea */
-	.readonly {
-		background-color: theme(colors.gray.500);
-	}
-
-	.appbox > * {
-		@apply text-white;
-	}
-
-	@keyframes pulse {
-		0% {
-			transform: scale(1);
-			opacity: 1;
-		}
-
-		50% {
-			transform: scale(1.05);
-			opacity: 0.7;
-		}
-
-		100% {
-			transform: scale(1);
-			opacity: 1;
-		}
-	}
-
-	.pulse:hover {
-		animation: pulse 2s ease-out infinite;
-	}
-
-	.messagewindow {
-		height: 90vh;
-	}
-
-	.appbox {
-		height: 90vh;
-	}
-
-	.messagebox {
-		scroll-margin-bottom: 100px;
-	}
 </style>

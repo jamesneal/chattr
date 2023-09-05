@@ -5,14 +5,9 @@
 import Dexie from 'dexie'
 
 export const db = new Dexie('personality')
+
 db.version(1).stores({
-  personalities: '++id, message, temperature'
+  personalities: '++id, name, message, temperature'
 })
 
-async function addPersonality(message, temperature) {
-  return await db.personalities.add({ message, temperature })
-}
 
-async function getPersonality(id) {
-  return await db.personalities.get(id)
-}
