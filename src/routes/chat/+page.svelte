@@ -17,6 +17,8 @@
 		return uuidv4();
 	}
 
+	let pagetitle = 'Chattr';
+
 	/**
 	 * @type {Array<{content: string, role: string}>}
 	 */
@@ -70,6 +72,10 @@
 	}
 	let hidden = false;
 </script>
+
+<svelte:head>
+	<title>{pagetitle}</title>
+</svelte:head>
 
 <Drawer position="left">
 	<div class="h-full w-[400px] bg-surface-3 overflow-scroll" transition:fly={{ x: -100 }}>
