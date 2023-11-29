@@ -20,6 +20,7 @@
 			return;
 		} else {
 			const personality = $personalities.find((p) => p.id === Number(name));
+			newpersonalityname = personality.name;
 			message.content = personality.message;
 			temperature = personality.temperature;
 		}
@@ -58,7 +59,7 @@
 
 <div class="flex flex-col border-2 border-purple-500 rounded">
 	<div class="border-b-2 text-center text-white border-white cursor-pointer">
-		≡ Personality Module (beta)
+		Personality Module (beta)
 	</div>
 	<div class="m-2" class:hidden>
 		<textarea
@@ -83,7 +84,7 @@
 		</div>
 		<div class="personalitieslist w-full">
 			<!-- A dropdown list of all the personalities in the store -->
-			<select bind:value={selected} class="w-full" on:change={changePersonality}>
+			<select bind:value={selected} class="w-full select" on:change={changePersonality}>
 				<option value="default">Select a personality</option>
 				{#if $personalities}
 					{#each $personalities as personality}

@@ -2,6 +2,7 @@
 	import { tick } from 'svelte';
 
 	import { options } from '$lib/optionsstore.js';
+
 	export let chat;
 	export let personality;
 
@@ -16,19 +17,9 @@
 
 	afterUpdate(() => {
 		tick().then(() => {
-			messagebox.scrollTo(0, messagebox.scrollHeight);
+			scrollToBottom();
 		});
 	});
-
-	function scrollToBottom(node) {
-		return {
-			update() {
-				tick().then(() => {
-					node.scrollTop = node.scrollHeight;
-				});
-			}
-		};
-	}
 
 	onMount(() => {
 		console.log(chat);
@@ -45,9 +36,25 @@
 				'content-type': 'application/json'
 			}
 		});
+		console.log('DAWG');
+		console.log({ response });
 
-		const text = await response.text();
-		chat.messages = [...chat.messages, { role: 'assistant', content: text }];
+		let text = '';
+		const reader = response.body.getReader();
+		const textDecoder = new TextDecoder();
+
+		chat.messages = [...chat.messages, { role: 'assistant', content: 'Loading...' }];
+
+		console.log(chat.messages[chat.messages.length - 1]);
+		while (true) {
+			const { done, value } = await reader.read();
+			if (done) break;
+			text += textDecoder.decode(value, { stream: true });
+			chat.messages[chat.messages.length - 1].content = text;
+		}
+		text += textDecoder.decode(); // Decode any remaining text
+		chat.messages[chat.messages.length - 1].content = text;
+
 		if (chat.messages.length == 4 || chat.messages.length == 5) {
 			summarizeConversation();
 		}
@@ -55,6 +62,7 @@
 
 		return text;
 	}
+
 	async function sendRequest() {
 		console.log($options);
 
@@ -85,10 +93,16 @@
 			sendRequest();
 		}
 	}
+	function scrollToBottom() {
+		if (!loading) return;
+		messagebox.scrollTo(0, messagebox.scrollHeight);
+	}
 
 	$: chat.messages = chat.messages.filter(
 		(message) => message.role != 'deleted' && message.content && message.content.trim() !== ''
 	);
+
+	$: messagebox && scrollToBottom();
 
 	async function summarizeConversation() {
 		const response = await fetch('/chat', {
@@ -122,13 +136,13 @@
 		<div class="mx-2 overflow-auto flex-grow" on:click={summarizeConversation}>{chat.title}</div>
 		<div class="right-0 w-1/4 text-right">{chat.date.toLocaleString('en-US')}</div>
 	</div>
-	<div bind:this={messagebox} id="messagebox" class="overflow-scroll" use:scrollToBottom>
+	<div bind:this={messagebox} id="messagebox" class="overflow-scroll">
 		{#each chat.messages as message, i}
 			<Message num={i} bind:message reload={regenerate} />
 		{/each}
-		{#if loading}
+		<!-- {#if loading}
 			<Message message={{ role: 'assistant', content: 'Loading...' }} />
-		{/if}
+		{/if} -->
 	</div>
 	<div class="flex-grow" />
 	<div class="w-full shrink border-t-2" id="chatbox">
