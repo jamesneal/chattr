@@ -26,6 +26,7 @@
 	});
 
 	const browser = import.meta.env.SSR === false;
+	let reader;
 
 	async function postRequest(messages, options) {
 		loading = true;
@@ -40,7 +41,8 @@
 		console.log({ response });
 
 		let text = '';
-		const reader = response.body.getReader();
+		let stop;
+		reader = response.body.getReader();
 		const textDecoder = new TextDecoder();
 
 		chat.messages = [...chat.messages, { role: 'assistant', content: 'Loading...' }];
@@ -61,6 +63,12 @@
 		loading = false;
 
 		return text;
+	}
+
+	async function abort() {
+		if (reader) {
+			reader.cancel();
+		}
 	}
 
 	async function sendRequest() {
@@ -170,6 +178,13 @@
 					type="button"
 					on:click={() => newChat()}>New</button
 				>
+				{#if loading}
+					<button
+						class="btn top-0 right-0 absolute bg-surface-800 border-red-700 border-2 rounded-none"
+						type="button"
+						on:click={() => abort()}>🛑</button
+					>
+				{/if}
 			</div>
 		</form>
 	</div>
